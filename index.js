@@ -49,10 +49,8 @@ module.exports = function(source) {
           return resolvePromise(context, importStatement[3])
             .then(function(filename) {
               importFilename = filename
-              self.addDependency && self.addDependency(filename);
-              return loadModulePromise("-!" + __dirname + "/stringify.loader.js!" + filename).catch(function(err) {
-                console.log('load module promise err', err)
-              })
+              self.addDependency && self.addDependency(filename)
+              return loadStylusFileAsModule(filename)
             })
             // Recursive call
             .then(flattenStylus)
@@ -81,13 +79,16 @@ module.exports = function(source) {
     })
   }
 
-  function loadModulePromise(request) {
+  function loadStylusFileAsModule(filepath) {
     return new Promise(function (resolve, reject) {
-      self.loadModule(request, function(err, source) {
+      self.loadModule("-!" + __dirname + "/stringify.loader.js!" + filepath, function(err, source) {
         if (err) reject(err)
         resolve(source)
-      });
-    });
+      })
+    }).then(stripQuotes)
+    .catch(function(err) {
+      console.log('load module promise err', err)
+    })
   }
 }
 
