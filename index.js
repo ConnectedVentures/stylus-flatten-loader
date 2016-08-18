@@ -4,7 +4,7 @@ var fs = require('fs')
 var loaderUtils = require('loader-utils')
 var Promise = require('promise')
 
-var importRegexp = /(.*)@(import|require)\s*["'](.*)["']\s*$/
+var importRegexp = /(.*)@(import|require)\s*["'](([./~]).*)["']\s*$/
 var trailingSlashesRegexp = /\/$/
 var leadingWhitespaceRegexp = /^([\t ]*)/
 var newLineRegexp = /(?:\\r)?\\n/
@@ -46,7 +46,12 @@ module.exports = function(source) {
           var type = importStatement[2]
           var importFilename
           // Asynchronously load import
-          return resolvePromise(context, importStatement[3])
+          var importPath = importStatement[3]
+          // should use webpack alias
+          if (importStatement[4].match(/~/)) {
+            importPath = importPath.replace(/^~/, '')
+          }
+          return resolvePromise(context, importPath)
             .then(function(filename) {
               importFilename = filename
               self.addDependency && self.addDependency(filename)
