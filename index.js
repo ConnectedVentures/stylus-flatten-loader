@@ -15,7 +15,7 @@ module.exports = function(source) {
   var context = self.context
   var done = self.async()
 
-  var flatSource = flattenStylus(source)
+  var flatSource = flattenStylus(source, context)
     .then(function (results) {
       results = addSourcefileComments(results, process.cwd(), self.resource, 'import')
       results = collapse(results) + "\\n\\n"
@@ -25,11 +25,9 @@ module.exports = function(source) {
       done(err)
     })
 
-  function flattenStylus (source, baseIndentation) {
+  function flattenStylus (source, baseDir) {
     source = source.replace(/\n/g, '\\n')
     var sourceLines = source.split(newLineRegexp)
-    baseIndentation = baseIndentation || 0
-
     // if not import, end recursion
     if (!hasImport(sourceLines)) {
       return Promise.resolve(sourceLines)
@@ -51,19 +49,23 @@ module.exports = function(source) {
           if (importStatement[4].match(/~/)) {
             importPath = importPath.replace(/^~/, '')
           }
-          return resolvePromise(context, importPath)
+          var newBaseDir
+          return resolvePromise(baseDir, importPath)
             .then(function(filename) {
               importFilename = filename
+              newBaseDir = path.dirname(filename)
               self.addDependency && self.addDependency(filename)
               return loadStylusFileAsModule(filename)
             })
             // Recursive call
-            .then(flattenStylus)
+            .then(function (source) {
+              return flattenStylus(source, newBaseDir)
+            })
             .then(removeEmptyLastLine)
             .then(function (source) {
               // return as array of strings, to replace the import
               source = addSourcefileComments(source, process.cwd(), importFilename, type)
-              source = indentLines(source, baseIndentation + indent.length)
+              source = indentLines(source, indent.length)
               return source
             })
         } else {
