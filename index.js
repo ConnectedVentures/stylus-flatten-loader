@@ -116,8 +116,8 @@ function removeEmptyLastLine(lines) {
 
 function addSourcefileComments(lines, cwd, filename, type) {
   filename = path.relative(cwd, filename)
-  lines = ['/*!\\n * @' + type.toUpperCase() + ' START from: ' + filename + '\\n */'].concat(lines)
-  lines.push('/*!\\n * @' + type.toUpperCase() + ' END from: ' + filename + '\\n */')
+  lines = ['/*\\n * @' + type.toUpperCase() + ' START from: ' + filename + '\\n */'].concat(lines)
+  lines.push('/*\\n * @' + type.toUpperCase() + ' END from: ' + filename + '\\n */')
   return lines
 }
 
